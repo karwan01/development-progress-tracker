@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Download, Plus, Trash2, Calendar } from "lucide-react";
+import jsPDF from "jspdf";
 
 // Type Definitions
 interface TeamMember {
@@ -108,7 +109,7 @@ const DevelopmentProgressTracker: React.FC = () => {
     setTasks(newTasks);
   };
 
-  const generatePDFReport = (): void => {
+  const generateTXTReport = (): void => {
     const reportContent = `
 =======================================================================
                      DEVELOPMENT PROGRESS REPORT
@@ -165,65 +166,159 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
     link.click();
   };
 
-  const generateDOCXReport = async (): Promise<void> => {
-    const docContent = `
-=======================================================================
-                     DEVELOPMENT PROGRESS REPORT
-=======================================================================
-
-PROJECT: ${projectName.toUpperCase()}
-=======================================================================
-
-TEAM MEMBERS:
------------------------------------------------------------------------
-${teamMembers
-  .map(
-    (member, index) =>
-      `${index + 1}. ${member.name.toUpperCase()} - ${member.role}`
-  )
-  .join("\n")}
------------------------------------------------------------------------
-
-DAILY TASKS:
-=======================================================================
-${tasks
-  .map(
-    (taskDate) => `
-DATE: >> ${taskDate.date.toUpperCase()} <<
------------------------------------------------------------------------
-
-${taskDate.items
-  .map(
-    (task, index) => `
-************* TASK ${index + 1} *************
-TITLE:        ${task.title.toUpperCase()}
-DESCRIPTION:  ${task.description}
-STATUS:       >> ${task.status.toUpperCase()} <<
-ASSIGNED TO:  ${task.assignedTo.toUpperCase()}
-PRIORITY:     >> ${task.priority.toUpperCase()} <<
-***************************************
-`
-  )
-  .join("\n")}
-`
-  )
-  .join(
-    "\n\n=======================================================================\n\n"
-  )}
-    `;
-
-    const encoder = new TextEncoder();
-    const uint8Array = encoder.encode(docContent);
-    const blob = new Blob([uint8Array], {
-      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  const generatePDF = (): void => {
+    // Create a new PDF document
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
     });
 
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `Development_Report_${
-      new Date().toISOString().split("T")[0]
-    }.docx`;
-    link.click();
+    // Set initial font styles
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(20);
+
+    // Add title (centered)
+    pdf.text("DEVELOPMENT PROGRESS REPORT", 105, 20, { align: "center" });
+
+    // Add horizontal line
+    pdf.setLineWidth(0.5);
+    pdf.line(20, 25, 190, 25);
+
+    // Add project name
+    pdf.setFontSize(16);
+    pdf.text(`PROJECT: ${projectName.toUpperCase()}`, 20, 35);
+
+    // Add divider
+    pdf.line(20, 40, 190, 40);
+
+    // Add team members section
+    pdf.setFontSize(14);
+    pdf.text("TEAM MEMBERS:", 20, 50);
+
+    // Add team members
+    let yPos = 60;
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(12);
+
+    teamMembers.forEach((member, index) => {
+      const memberText = `${index + 1}. ${member.name.toUpperCase()} - ${
+        member.role
+      }`;
+      pdf.text(memberText, 25, yPos);
+      yPos += 8;
+    });
+
+    // Add divider
+    pdf.line(20, yPos, 190, yPos);
+    yPos += 10;
+
+    // Add tasks header
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(14);
+    pdf.text("DAILY TASKS:", 20, yPos);
+    yPos += 10;
+
+    // Add tasks by date
+    tasks.forEach((taskDate, dateIndex) => {
+      // Add extra space between dates
+      if (dateIndex > 0) {
+        yPos += 15; // Add 15mm of extra space between date sections
+      }
+
+      // Check if we need a new page
+      if (yPos > 270) {
+        pdf.addPage();
+        yPos = 20;
+      }
+
+      // Add date header with background
+      pdf.setFillColor(240, 240, 240);
+      pdf.rect(20, yPos - 5, 170, 10, "F");
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(12);
+      pdf.text(`DATE: ${taskDate.date.toUpperCase()}`, 25, yPos);
+      yPos += 15;
+
+      // Add tasks for this date
+      taskDate.items.forEach((task, taskIndex) => {
+        // Check if we need a new page
+        if (yPos > 250) {
+          pdf.addPage();
+          yPos = 20;
+        }
+
+        // Task box background
+        pdf.setFillColor(248, 249, 250);
+        pdf.rect(20, yPos - 5, 170, 38, "F");
+
+        // Task border
+        pdf.setDrawColor(220, 220, 220);
+        pdf.rect(20, yPos - 5, 170, 38);
+
+        // Task number and title
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(11);
+        pdf.text(
+          `TASK ${taskIndex + 1}: ${task.title.toUpperCase()}`,
+          25,
+          yPos
+        );
+        yPos += 7;
+
+        // Task description (may need to wrap long text)
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(10);
+
+        // Split long descriptions into multiple lines if needed
+        const description = `DESCRIPTION: ${task.description}`;
+        const splitDescription = pdf.splitTextToSize(description, 160);
+        pdf.text(splitDescription, 25, yPos);
+        yPos += splitDescription.length * 5 + 2;
+
+        // Task status
+        pdf.setFont("helvetica", "bold");
+        // Set color based on status
+        if (task.status === "Completed") {
+          pdf.setTextColor(0, 128, 0); // Green
+        } else if (task.status === "In Progress") {
+          pdf.setTextColor(0, 0, 255); // Blue
+        } else {
+          pdf.setTextColor(255, 165, 0); // Orange
+        }
+        pdf.text(`STATUS: ${task.status.toUpperCase()}`, 25, yPos);
+        pdf.setTextColor(0, 0, 0); // Reset to black
+        yPos += 7;
+
+        // Assigned To
+        pdf.setFont("helvetica", "normal");
+        pdf.text(
+          `ASSIGNED TO: ${task.assignedTo.toUpperCase()}`,
+          100,
+          yPos - 7
+        );
+
+        // Priority
+        pdf.setFont("helvetica", "bold");
+        // Set color based on priority
+        if (task.priority === "High") {
+          pdf.setTextColor(255, 0, 0); // Red
+        } else if (task.priority === "Medium") {
+          pdf.setTextColor(255, 165, 0); // Orange
+        } else {
+          pdf.setTextColor(0, 128, 0); // Green
+        }
+        pdf.text(`PRIORITY: ${task.priority.toUpperCase()}`, 25, yPos);
+        pdf.setTextColor(0, 0, 0); // Reset to black
+
+        yPos += 15;
+      });
+    });
+
+    // Save the PDF
+    pdf.save(
+      `Development_Report_${new Date().toISOString().split("T")[0]}.pdf`
+    );
   };
 
   // Helper function to format date string for input field
@@ -406,16 +501,16 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
       {/* Report Generation Buttons */}
       <div className="flex space-x-2">
         <button
-          onClick={generatePDFReport}
+          onClick={generateTXTReport}
           className="bg-red-500 text-white p-2 rounded flex items-center"
         >
           <Download className="mr-2" /> Generate TXT
         </button>
         <button
-          onClick={generateDOCXReport}
-          className="bg-blue-500 text-white p-2 rounded flex items-center"
+          onClick={generatePDF}
+          className="bg-purple-500 text-white p-2 rounded flex items-center"
         >
-          <Download className="mr-2" /> Generate DOCX
+          <Download className="mr-2" /> Generate PDF
         </button>
       </div>
     </div>
