@@ -6,7 +6,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/development-progress-tracker.git
+git clone https://github.com/karwan01/development-progress-tracker.git
 
 # Navigate to the project directory
 cd development-progress-tracker
