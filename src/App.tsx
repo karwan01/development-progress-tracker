@@ -215,7 +215,6 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
     }.txt`;
     link.click();
   };
-
   const generatePDF = (): void => {
     // Create a new PDF document
     const pdf = new jsPDF({
@@ -224,23 +223,22 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
       format: "a4",
     });
 
-    // Set initial font styles
-    pdf.setFont("helvetica", "bold");
+    // Set initial font styles - changed to a monospace font
+    pdf.setFont("courier", "bold");
     pdf.setFontSize(20);
 
     // Add title (centered)
     pdf.text("DEVELOPMENT PROGRESS REPORT", 105, 20, { align: "center" });
 
-    // Add horizontal line
-    pdf.setLineWidth(0.5);
+    // Keep only this essential horizontal line
+    pdf.setLineWidth(0.3);
     pdf.line(20, 25, 190, 25);
 
     // Add project name
     pdf.setFontSize(16);
     pdf.text(`PROJECT: ${projectName.toUpperCase()}`, 20, 35);
 
-    // Add divider
-    pdf.line(20, 40, 190, 40);
+    // Removed unnecessary divider line here
 
     // Add team members section
     pdf.setFontSize(14);
@@ -248,7 +246,7 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
 
     // Add team members
     let yPos = 60;
-    pdf.setFont("helvetica", "normal");
+    pdf.setFont("courier", "normal");
     pdf.setFontSize(12);
 
     teamMembers.forEach((member, index) => {
@@ -259,12 +257,11 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
       yPos += 8;
     });
 
-    // Add divider
-    pdf.line(20, yPos, 190, yPos);
+    // Removed unnecessary divider line here
     yPos += 10;
 
     // Add tasks header
-    pdf.setFont("helvetica", "bold");
+    pdf.setFont("courier", "bold");
     pdf.setFontSize(14);
     pdf.text("DAILY TASKS:", 20, yPos);
     yPos += 10;
@@ -282,10 +279,10 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
         yPos = 20;
       }
 
-      // Add date header with background
-      pdf.setFillColor(240, 240, 240);
+      // Add date header with background - slightly softer gray
+      pdf.setFillColor(245, 245, 245);
       pdf.rect(20, yPos - 5, 170, 10, "F");
-      pdf.setFont("helvetica", "bold");
+      pdf.setFont("courier", "bold");
       pdf.setFontSize(12);
       pdf.text(`DATE: ${taskDate.date.toUpperCase()}`, 25, yPos);
       yPos += 15;
@@ -298,16 +295,16 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
           yPos = 20;
         }
 
-        // Task box background
-        pdf.setFillColor(248, 249, 250);
+        // Task box background - softer blue-gray tint
+        pdf.setFillColor(250, 250, 252);
         pdf.rect(20, yPos - 5, 170, 38, "F");
 
-        // Task border
-        pdf.setDrawColor(220, 220, 220);
+        // Task border - softer gray
+        pdf.setDrawColor(230, 230, 230);
         pdf.rect(20, yPos - 5, 170, 38);
 
         // Task number and title
-        pdf.setFont("helvetica", "bold");
+        pdf.setFont("courier", "bold");
         pdf.setFontSize(11);
         pdf.text(
           `TASK ${taskIndex + 1}: ${task.title.toUpperCase()}`,
@@ -317,7 +314,7 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
         yPos += 7;
 
         // Task description (may need to wrap long text)
-        pdf.setFont("helvetica", "normal");
+        pdf.setFont("courier", "normal");
         pdf.setFontSize(10);
 
         // Split long descriptions into multiple lines if needed
@@ -327,21 +324,21 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
         yPos += splitDescription.length * 5 + 2;
 
         // Task status
-        pdf.setFont("helvetica", "bold");
-        // Set color based on status
+        pdf.setFont("courier", "bold");
+        // Set color based on status - more muted colors
         if (task.status === "Completed") {
-          pdf.setTextColor(0, 128, 0); // Green
+          pdf.setTextColor(76, 175, 80); // Softer green
         } else if (task.status === "In Progress") {
-          pdf.setTextColor(0, 0, 255); // Blue
+          pdf.setTextColor(66, 133, 244); // Softer blue
         } else {
-          pdf.setTextColor(255, 165, 0); // Orange
+          pdf.setTextColor(255, 152, 0); // Softer orange
         }
         pdf.text(`STATUS: ${task.status.toUpperCase()}`, 25, yPos);
         pdf.setTextColor(0, 0, 0); // Reset to black
         yPos += 7;
 
         // Assigned To
-        pdf.setFont("helvetica", "normal");
+        pdf.setFont("courier", "normal");
         pdf.text(
           `ASSIGNED TO: ${task.assignedTo.toUpperCase()}`,
           100,
@@ -349,14 +346,14 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
         );
 
         // Priority
-        pdf.setFont("helvetica", "bold");
-        // Set color based on priority
+        pdf.setFont("courier", "bold");
+        // Set color based on priority - more muted colors
         if (task.priority === "High") {
-          pdf.setTextColor(255, 0, 0); // Red
+          pdf.setTextColor(239, 83, 80); // Softer red
         } else if (task.priority === "Medium") {
-          pdf.setTextColor(255, 165, 0); // Orange
+          pdf.setTextColor(255, 152, 0); // Softer orange
         } else {
-          pdf.setTextColor(0, 128, 0); // Green
+          pdf.setTextColor(76, 175, 80); // Softer green
         }
         pdf.text(`PRIORITY: ${task.priority.toUpperCase()}`, 25, yPos);
         pdf.setTextColor(0, 0, 0); // Reset to black
@@ -370,7 +367,6 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
       `Development_Report_${new Date().toISOString().split("T")[0]}.pdf`
     );
   };
-
   // Helper function to format date string for input field
   const formatDateForInput = (dateString: string): string => {
     try {
