@@ -336,9 +336,20 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
   const formatDateForInput = (dateString: string): string => {
     try {
       const date = new Date(dateString);
-      return date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+
+      // Get local date components and build YYYY-MM-DD manually
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed
+      const day = String(date.getDate()).padStart(2, "0");
+
+      return `${year}-${month}-${day}`; // Format as YYYY-MM-DD without time zone conversion
     } catch {
-      return new Date().toISOString().split("T")[0]; // Default to today if parsing fails
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, "0");
+      const day = String(today.getDate()).padStart(2, "0");
+
+      return `${year}-${month}-${day}`;
     }
   };
 
