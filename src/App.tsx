@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Download,
   Plus,
@@ -6,6 +6,8 @@ import {
   Calendar,
   CalendarX,
   UserX,
+  Moon,
+  Sun,
 } from "lucide-react";
 import jsPDF from "jspdf";
 
@@ -29,6 +31,7 @@ interface DailyTasks {
 }
 
 const DevelopmentProgressTracker: React.FC = () => {
+  const [darkMode, setDarkMode] = useState<boolean>(false);
   const [projectName, setProjectName] = useState<string>("");
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
     { name: "", role: "" },
@@ -47,6 +50,24 @@ const DevelopmentProgressTracker: React.FC = () => {
       ],
     },
   ]);
+
+  // Update theme when darkMode state changes
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+      document.body.classList.add("bg-black", "text-dark-text");
+      document.body.classList.remove("bg-gray-100");
+    } else {
+      document.documentElement.classList.remove("dark");
+      document.body.classList.remove("bg-black", "text-dark-text");
+      document.body.classList.add("bg-gray-100");
+    }
+    localStorage.setItem("darkMode", darkMode.toString());
+  }, [darkMode]);
+
+  const toggleTheme = () => {
+    setDarkMode(!darkMode);
+  };
 
   // Add function to update date for a specific task group
   const updateTaskDate = (dateIndex: number, newDate: string): void => {
@@ -372,7 +393,15 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
   };
 
   return (
-    <div className="p-6 bg-white shadow-md rounded-lg">
+    <div className="p-6 bg-white dark:bg-dark-background text-gray-800 dark:text-dark-text rounded-lg relative max-w-7xl mx-auto my-8">
+      <button
+        onClick={toggleTheme}
+        className="p-2 rounded-full bg-gray-200 dark:bg-dark-surface hover:bg-gray-300 dark:hover:bg-dark-surface-alt absolute top-4 right-4 text-gray-800 dark:text-dark-text"
+        title={darkMode ? "Switch to light theme" : "Switch to dark theme"}
+      >
+        {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+      </button>
+
       <h1 className="text-2xl font-bold mb-4">Development Progress Tracker</h1>
 
       {/* Project Name Input */}
@@ -382,7 +411,7 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
           type="text"
           value={projectName}
           onChange={(e) => setProjectName(e.target.value)}
-          className="w-full p-2 border rounded"
+          className="w-full p-2 border dark:border-dark-border rounded bg-white dark:bg-dark-surface text-gray-800 dark:text-dark-text"
           placeholder="Enter project name"
         />
       </div>
@@ -397,18 +426,18 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
               placeholder="Name"
               value={member.name}
               onChange={(e) => updateTeamMember(index, "name", e.target.value)}
-              className="mr-2 p-2 border rounded flex-1"
+              className="mr-2 p-2 border dark:border-dark-border rounded flex-1 bg-white dark:bg-dark-surface text-gray-800 dark:text-dark-text"
             />
             <input
               type="text"
               placeholder="Role"
               value={member.role}
               onChange={(e) => updateTeamMember(index, "role", e.target.value)}
-              className="p-2 border rounded flex-1"
+              className="p-2 border dark:border-dark-border rounded flex-1 bg-white dark:bg-dark-surface text-gray-800 dark:text-dark-text"
             />
             <button
               onClick={() => removeTeamMember(index)}
-              className="text-red-500 hover:bg-red-100 p-1 rounded ml-2"
+              className="text-red-500 dark:text-dark-danger hover:bg-red-100 dark:hover:bg-opacity-20 dark:hover:bg-dark-danger p-1 rounded ml-2"
               disabled={teamMembers.length <= 1}
               title={
                 teamMembers.length <= 1
@@ -422,7 +451,7 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
         ))}
         <button
           onClick={addTeamMember}
-          className="bg-blue-500 text-white p-2 rounded flex items-center"
+          className="bg-blue-500 dark:bg-dark-primary text-white dark:text-dark-text p-2 rounded flex items-center hover:bg-blue-600 dark:hover:bg-opacity-90"
         >
           <Plus className="mr-2" /> Add Team Member
         </button>
@@ -432,10 +461,16 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
       <div className="mb-4">
         <h2 className="font-semibold mb-2">Daily Tasks</h2>
         {tasks.map((taskDate, dateIndex) => (
-          <div key={dateIndex} className="border p-4 mb-2 rounded">
+          <div
+            key={dateIndex}
+            className="border dark:border-dark-border p-4 mb-2 rounded bg-white dark:bg-dark-surface"
+          >
             <div className="flex justify-between items-center mb-2">
               <div className="flex items-center">
-                <Calendar className="mr-2 text-gray-500" size={18} />
+                <Calendar
+                  className="mr-2 text-gray-500 dark:text-dark-text-muted"
+                  size={18}
+                />
                 <input
                   type="date"
                   value={formatDateForInput(taskDate.date)}
@@ -444,14 +479,14 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
                     const date = new Date(e.target.value);
                     updateTaskDate(dateIndex, date.toLocaleDateString());
                   }}
-                  className="p-1 border rounded mr-2"
+                  className="p-1 border dark:border-dark-border rounded mr-2 bg-white dark:bg-dark-surface text-gray-800 dark:text-dark-text"
                 />
                 <span className="font-medium">{taskDate.date}</span>
               </div>
               <div className="flex items-center">
                 <button
                   onClick={() => removeTaskDate(dateIndex)}
-                  className="text-red-500 hover:bg-red-100 p-1 rounded mr-2"
+                  className="text-red-500 dark:text-dark-danger hover:bg-red-100 dark:hover:bg-opacity-20 dark:hover:bg-dark-danger p-1 rounded mr-2"
                   disabled={tasks.length <= 1}
                   title={
                     tasks.length <= 1
@@ -463,7 +498,7 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
                 </button>
                 <button
                   onClick={() => addTaskToDate(dateIndex)}
-                  className="bg-green-500 text-white p-1 rounded flex items-center"
+                  className="bg-green-500 dark:bg-dark-success text-white dark:text-dark-text p-1 rounded flex items-center hover:bg-green-600 dark:hover:bg-opacity-90"
                 >
                   <Plus className="mr-1" /> Add Task
                 </button>
@@ -471,12 +506,15 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
             </div>
 
             {taskDate.items.map((task, taskIndex) => (
-              <div key={taskIndex} className="mb-4 p-2 bg-gray-50 rounded">
+              <div
+                key={taskIndex}
+                className="mb-4 p-2 bg-gray-50 dark:bg-dark-surface-alt rounded"
+              >
                 <div className="flex justify-between items-center mb-2">
                   <h4 className="font-semibold">Task {taskIndex + 1}</h4>
                   <button
                     onClick={() => removeTask(dateIndex, taskIndex)}
-                    className="text-red-500 hover:bg-red-100 p-1 rounded"
+                    className="text-red-500 dark:text-dark-danger hover:bg-red-100 dark:hover:bg-opacity-20 dark:hover:bg-dark-danger p-1 rounded"
                   >
                     <ListX size={16} />
                   </button>
@@ -490,14 +528,14 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
                     onChange={(e) =>
                       updateTask(dateIndex, taskIndex, "title", e.target.value)
                     }
-                    className="p-2 border rounded"
+                    className="p-2 border dark:border-dark-border rounded bg-white dark:bg-dark-surface text-gray-800 dark:text-dark-text"
                   />
                   <select
                     value={task.status}
                     onChange={(e) =>
                       updateTask(dateIndex, taskIndex, "status", e.target.value)
                     }
-                    className="p-2 border rounded"
+                    className="p-2 border dark:border-dark-border rounded bg-white dark:bg-dark-surface text-gray-800 dark:text-dark-text"
                   >
                     <option value="In Progress">In Progress</option>
                     <option value="Completed">Completed</option>
@@ -516,7 +554,7 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
                       e.target.value
                     )
                   }
-                  className="w-full p-2 border rounded mt-2"
+                  className="w-full p-2 border dark:border-dark-border rounded mt-2 bg-white dark:bg-dark-surface text-gray-800 dark:text-dark-text"
                   rows={3}
                 />
 
@@ -533,7 +571,7 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
                         e.target.value
                       )
                     }
-                    className="p-2 border rounded"
+                    className="p-2 border dark:border-dark-border rounded bg-white dark:bg-dark-surface text-gray-800 dark:text-dark-text"
                   />
                   <select
                     value={task.priority}
@@ -545,7 +583,7 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
                         e.target.value
                       )
                     }
-                    className="p-2 border rounded"
+                    className="p-2 border dark:border-dark-border rounded bg-white dark:bg-dark-surface text-gray-800 dark:text-dark-text"
                   >
                     <option value="Low">Low</option>
                     <option value="Medium">Medium</option>
@@ -558,7 +596,7 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
         ))}
         <button
           onClick={addTaskDate}
-          className="bg-blue-500 text-white p-2 rounded flex items-center"
+          className="bg-blue-500 dark:bg-dark-primary text-white dark:text-dark-text p-2 rounded flex items-center hover:bg-blue-600 dark:hover:bg-opacity-90"
         >
           <Plus className="mr-2" /> Add Date
         </button>
@@ -568,13 +606,13 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
       <div className="flex space-x-2">
         <button
           onClick={generateTXTReport}
-          className="bg-red-500 text-white p-2 rounded flex items-center"
+          className="bg-red-500 dark:bg-dark-danger text-white dark:text-dark-text p-2 rounded flex items-center hover:bg-red-600 dark:hover:bg-opacity-90"
         >
           <Download className="mr-2" /> Generate TXT
         </button>
         <button
           onClick={generatePDF}
-          className="bg-purple-500 text-white p-2 rounded flex items-center"
+          className="bg-purple-500 dark:bg-dark-secondary text-white dark:text-dark-text p-2 rounded flex items-center hover:bg-purple-600 dark:hover:bg-opacity-90"
         >
           <Download className="mr-2" /> Generate PDF
         </button>
