@@ -337,7 +337,7 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
     try {
       const date = new Date(dateString);
       return date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
-    } catch (e) {
+    } catch {
       return new Date().toISOString().split("T")[0]; // Default to today if parsing fails
     }
   };
