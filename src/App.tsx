@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { Download, Plus, Trash2, Calendar } from "lucide-react";
+import {
+  Download,
+  Plus,
+  ListX,
+  Calendar,
+  CalendarX,
+  UserX,
+} from "lucide-react";
 import jsPDF from "jspdf";
 
 // Type Definitions
@@ -45,6 +52,17 @@ const DevelopmentProgressTracker: React.FC = () => {
   const updateTaskDate = (dateIndex: number, newDate: string): void => {
     const newTasks = [...tasks];
     newTasks[dateIndex].date = newDate;
+    setTasks(newTasks);
+  };
+
+  // Function to remove a whole date group
+  const removeTaskDate = (dateIndex: number): void => {
+    // Prevent removing the last date
+    if (tasks.length <= 1) {
+      return;
+    }
+    const newTasks = [...tasks];
+    newTasks.splice(dateIndex, 1);
     setTasks(newTasks);
   };
 
@@ -398,7 +416,7 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
                   : "Remove team member"
               }
             >
-              <Trash2 size={16} />
+              <UserX size={16} />
             </button>
           </div>
         ))}
@@ -430,12 +448,26 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
                 />
                 <span className="font-medium">{taskDate.date}</span>
               </div>
-              <button
-                onClick={() => addTaskToDate(dateIndex)}
-                className="bg-green-500 text-white p-1 rounded flex items-center"
-              >
-                <Plus className="mr-1" /> Add Task
-              </button>
+              <div className="flex items-center">
+                <button
+                  onClick={() => removeTaskDate(dateIndex)}
+                  className="text-red-500 hover:bg-red-100 p-1 rounded mr-2"
+                  disabled={tasks.length <= 1}
+                  title={
+                    tasks.length <= 1
+                      ? "Cannot remove the last date"
+                      : "Remove all tasks for this date"
+                  }
+                >
+                  <CalendarX size={16} />
+                </button>
+                <button
+                  onClick={() => addTaskToDate(dateIndex)}
+                  className="bg-green-500 text-white p-1 rounded flex items-center"
+                >
+                  <Plus className="mr-1" /> Add Task
+                </button>
+              </div>
             </div>
 
             {taskDate.items.map((task, taskIndex) => (
@@ -446,7 +478,7 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
                     onClick={() => removeTask(dateIndex, taskIndex)}
                     className="text-red-500 hover:bg-red-100 p-1 rounded"
                   >
-                    <Trash2 size={16} />
+                    <ListX size={16} />
                   </button>
                 </div>
 
