@@ -62,6 +62,17 @@ const DevelopmentProgressTracker: React.FC = () => {
     setTeamMembers(newMembers);
   };
 
+  // Add function to remove a team member
+  const removeTeamMember = (index: number): void => {
+    // Prevent removing the last team member
+    if (teamMembers.length <= 1) {
+      return;
+    }
+    const newMembers = [...teamMembers];
+    newMembers.splice(index, 1);
+    setTeamMembers(newMembers);
+  };
+
   const addTaskDate = (): void => {
     setTasks([
       ...tasks,
@@ -351,7 +362,7 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
       <div className="mb-4">
         <h2 className="font-semibold mb-2">Team Members</h2>
         {teamMembers.map((member, index) => (
-          <div key={index} className="flex mb-2">
+          <div key={index} className="flex mb-2 items-center">
             <input
               type="text"
               placeholder="Name"
@@ -366,6 +377,18 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
               onChange={(e) => updateTeamMember(index, "role", e.target.value)}
               className="p-2 border rounded flex-1"
             />
+            <button
+              onClick={() => removeTeamMember(index)}
+              className="text-red-500 hover:bg-red-100 p-1 rounded ml-2"
+              disabled={teamMembers.length <= 1}
+              title={
+                teamMembers.length <= 1
+                  ? "Cannot remove the last team member"
+                  : "Remove team member"
+              }
+            >
+              <Trash2 size={16} />
+            </button>
           </div>
         ))}
         <button
