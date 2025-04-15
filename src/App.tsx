@@ -215,6 +215,7 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
     }.txt`;
     link.click();
   };
+
   const generatePDF = (): void => {
     // Create a new PDF document
     const pdf = new jsPDF({
@@ -238,8 +239,6 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
     pdf.setFontSize(16);
     pdf.text(`PROJECT: ${projectName.toUpperCase()}`, 20, 35);
 
-    // Removed unnecessary divider line here
-
     // Add team members section
     pdf.setFontSize(14);
     pdf.text("TEAM MEMBERS:", 20, 50);
@@ -257,7 +256,6 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
       yPos += 8;
     });
 
-    // Removed unnecessary divider line here
     yPos += 10;
 
     // Add tasks header
@@ -268,9 +266,9 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
 
     // Add tasks by date
     tasks.forEach((taskDate, dateIndex) => {
-      // Add extra space between dates
+      // Add extra space between dates - increased from 8 to 12mm
       if (dateIndex > 0) {
-        yPos += 15; // Add 15mm of extra space between date sections
+        yPos += 12;
       }
 
       // Check if we need a new page
@@ -285,7 +283,9 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
       pdf.setFont("courier", "bold");
       pdf.setFontSize(12);
       pdf.text(`DATE: ${taskDate.date.toUpperCase()}`, 25, yPos);
-      yPos += 15;
+
+      // Space between date header and first task - increased from 7 to 10mm
+      yPos += 10;
 
       // Add tasks for this date
       taskDate.items.forEach((task, taskIndex) => {
@@ -293,15 +293,35 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
         if (yPos > 250) {
           pdf.addPage();
           yPos = 20;
+
+          // If we're on a new page, repeat the date header
+          pdf.setFillColor(245, 245, 245);
+          pdf.rect(20, yPos - 5, 170, 10, "F");
+          pdf.setFont("courier", "bold");
+          pdf.setFontSize(12);
+          pdf.text(
+            `DATE: ${taskDate.date.toUpperCase()} (CONTINUED)`,
+            25,
+            yPos
+          );
+          yPos += 10;
         }
+
+        // Calculate the height needed for description
+        const description = `DESCRIPTION: ${task.description}`;
+        const splitDescription = pdf.splitTextToSize(description, 160);
+        const descriptionHeight = splitDescription.length * 5 + 2;
+
+        // Calculate total height for this task - added more padding
+        const taskHeight = 38 + descriptionHeight; // Base height + description
 
         // Task box background - softer blue-gray tint
         pdf.setFillColor(250, 250, 252);
-        pdf.rect(20, yPos - 5, 170, 38, "F");
+        pdf.rect(20, yPos - 5, 170, taskHeight, "F");
 
         // Task border - softer gray
         pdf.setDrawColor(230, 230, 230);
-        pdf.rect(20, yPos - 5, 170, 38);
+        pdf.rect(20, yPos - 5, 170, taskHeight);
 
         // Task number and title
         pdf.setFont("courier", "bold");
@@ -317,11 +337,9 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
         pdf.setFont("courier", "normal");
         pdf.setFontSize(10);
 
-        // Split long descriptions into multiple lines if needed
-        const description = `DESCRIPTION: ${task.description}`;
-        const splitDescription = pdf.splitTextToSize(description, 160);
+        // Add the description with proper wrapping
         pdf.text(splitDescription, 25, yPos);
-        yPos += splitDescription.length * 5 + 2;
+        yPos += descriptionHeight;
 
         // Task status
         pdf.setFont("courier", "bold");
@@ -358,8 +376,16 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
         pdf.text(`PRIORITY: ${task.priority.toUpperCase()}`, 25, yPos);
         pdf.setTextColor(0, 0, 0); // Reset to black
 
-        yPos += 15;
+        // Spacing between tasks - increased from 8 to 12mm
+        yPos += 12;
       });
+
+      // Add a visual separator between dates (only if not the last date)
+      if (dateIndex < tasks.length - 1) {
+        pdf.setDrawColor(200, 200, 200);
+        pdf.setLineWidth(0.1);
+        pdf.line(25, yPos, 185, yPos);
+      }
     });
 
     // Save the PDF
@@ -367,6 +393,7 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
       `Development_Report_${new Date().toISOString().split("T")[0]}.pdf`
     );
   };
+
   // Helper function to format date string for input field
   const formatDateForInput = (dateString: string): string => {
     try {
@@ -501,93 +528,122 @@ PRIORITY:     >> ${task.priority.toUpperCase()} <<
               </div>
             </div>
 
-            {taskDate.items.map((task, taskIndex) => (
-              <div
-                key={taskIndex}
-                className="mb-4 p-2 bg-gray-50 dark:bg-dark-surface-alt rounded"
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <h4 className="font-semibold">Task {taskIndex + 1}</h4>
-                  <button
-                    onClick={() => removeTask(dateIndex, taskIndex)}
-                    className="text-red-500 dark:text-dark-danger hover:bg-red-100 dark:hover:bg-opacity-20 dark:hover:bg-dark-danger p-1 rounded"
-                  >
-                    <ListX size={16} />
-                  </button>
-                </div>
+            {/* Tasks container with reduced padding */}
+            <div className="p-3">
+              {taskDate.items.map((task, taskIndex) => (
+                <div
+                  key={taskIndex}
+                  className="mb-3 p-3 bg-gray-50 dark:bg-dark-surface-alt rounded shadow-sm border dark:border-dark-border"
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-semibold">Task {taskIndex + 1}</h4>
+                    <button
+                      onClick={() => removeTask(dateIndex, taskIndex)}
+                      className="text-red-500 dark:text-dark-danger hover:bg-red-100 dark:hover:bg-opacity-20 dark:hover:bg-dark-danger p-1 rounded"
+                    >
+                      <ListX size={16} />
+                    </button>
+                  </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="text"
-                    placeholder="Task Title"
-                    value={task.title}
-                    onChange={(e) =>
-                      updateTask(dateIndex, taskIndex, "title", e.target.value)
-                    }
-                    className="p-2 border dark:border-dark-border rounded bg-white dark:bg-dark-surface text-gray-800 dark:text-dark-text"
-                  />
-                  <select
-                    value={task.status}
-                    onChange={(e) =>
-                      updateTask(dateIndex, taskIndex, "status", e.target.value)
-                    }
-                    className="p-2 border dark:border-dark-border rounded bg-white dark:bg-dark-surface text-gray-800 dark:text-dark-text"
-                  >
-                    <option value="In Progress">In Progress</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Pending">Pending</option>
-                  </select>
-                </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      placeholder="Task Title"
+                      value={task.title}
+                      onChange={(e) =>
+                        updateTask(
+                          dateIndex,
+                          taskIndex,
+                          "title",
+                          e.target.value
+                        )
+                      }
+                      className="p-2 border dark:border-dark-border rounded bg-white dark:bg-dark-surface text-gray-800 dark:text-dark-text"
+                    />
+                    <select
+                      value={task.status}
+                      onChange={(e) =>
+                        updateTask(
+                          dateIndex,
+                          taskIndex,
+                          "status",
+                          e.target.value
+                        )
+                      }
+                      className="p-2 border dark:border-dark-border rounded bg-white dark:bg-dark-surface text-gray-800 dark:text-dark-text"
+                    >
+                      <option value="In Progress">In Progress</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Pending">Pending</option>
+                    </select>
+                  </div>
 
-                <textarea
-                  placeholder="Task Description"
-                  value={task.description}
-                  onChange={(e) =>
-                    updateTask(
-                      dateIndex,
-                      taskIndex,
-                      "description",
-                      e.target.value
-                    )
-                  }
-                  className="w-full p-2 border dark:border-dark-border rounded mt-2 bg-white dark:bg-dark-surface text-gray-800 dark:text-dark-text"
-                  rows={3}
-                />
+                  {/* Description textarea - Now has auto-resize functionality */}
+                  <div className="mt-2">
+                    <textarea
+                      placeholder="Task Description"
+                      value={task.description}
+                      onChange={(e) => {
+                        updateTask(
+                          dateIndex,
+                          taskIndex,
+                          "description",
+                          e.target.value
+                        );
+                        // Auto-resize textarea based on content
+                        e.target.style.height = "auto";
+                        e.target.style.height = `${e.target.scrollHeight}px`;
+                      }}
+                      onFocus={(e) => {
+                        // Set initial height when focused
+                        e.target.style.height = "auto";
+                        e.target.style.height = `${e.target.scrollHeight}px`;
+                      }}
+                      className="w-full p-2 border dark:border-dark-border rounded bg-white dark:bg-dark-surface text-gray-800 dark:text-dark-text resize-none overflow-hidden min-h-[80px]"
+                    />
+                  </div>
 
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  <input
-                    type="text"
-                    placeholder="Assigned To"
-                    value={task.assignedTo}
-                    onChange={(e) =>
-                      updateTask(
-                        dateIndex,
-                        taskIndex,
-                        "assignedTo",
-                        e.target.value
-                      )
-                    }
-                    className="p-2 border dark:border-dark-border rounded bg-white dark:bg-dark-surface text-gray-800 dark:text-dark-text"
-                  />
-                  <select
-                    value={task.priority}
-                    onChange={(e) =>
-                      updateTask(
-                        dateIndex,
-                        taskIndex,
-                        "priority",
-                        e.target.value
-                      )
-                    }
-                    className="p-2 border dark:border-dark-border rounded bg-white dark:bg-dark-surface text-gray-800 dark:text-dark-text"
-                  >
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                  </select>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <input
+                      type="text"
+                      placeholder="Assigned To"
+                      value={task.assignedTo}
+                      onChange={(e) =>
+                        updateTask(
+                          dateIndex,
+                          taskIndex,
+                          "assignedTo",
+                          e.target.value
+                        )
+                      }
+                      className="p-2 border dark:border-dark-border rounded bg-white dark:bg-dark-surface text-gray-800 dark:text-dark-text"
+                    />
+                    <select
+                      value={task.priority}
+                      onChange={(e) =>
+                        updateTask(
+                          dateIndex,
+                          taskIndex,
+                          "priority",
+                          e.target.value
+                        )
+                      }
+                      className="p-2 border dark:border-dark-border rounded bg-white dark:bg-dark-surface text-gray-800 dark:text-dark-text"
+                    >
+                      <option value="Low">Low</option>
+                      <option value="Medium">Medium</option>
+                      <option value="High">High</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+
+              {taskDate.items.length === 0 && (
+                <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                  No tasks yet. Click 'Add Task' to create one.
+                </div>
+              )}
+            </div>
           </div>
         ))}
         <button
